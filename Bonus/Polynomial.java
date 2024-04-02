@@ -1,19 +1,20 @@
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Scanner;
+import java.util.Iterator;
 
 
 public class Polynomial{
 
-    X[] variables;
+    LinkedList<X> variables;
     int degree;
 
-    public Polynomial(X[] variables){
+    public Polynomial(LinkedList<X> variables){
         this.variables=variables;
-        this.degree=variables[0].power;
-        for (int i = 1; i < this.variables.length; i++) {
-            if(variables[i].power>this.degree){
-                this.degree=variables[i].power;
+        this.degree=variables.get(0).power;
+        for (int i = 1; i < this.variables.size(); i++) {
+            if(variables.get(i).power>this.degree){
+                this.degree=variables.get(i).power;
             }
         }
         this.cleanVariables();
@@ -25,10 +26,10 @@ public class Polynomial{
             return;
         } else if(amountOfTerms==0){
             this.degree=0;
-            this.variables=new X[0];
+            this.variables=new LinkedList<X>();
             return;
         } else{
-            this.variables=new X[amountOfTerms];
+            this.variables=new LinkedList<X>();
             Scanner s1=new Scanner(System.in);
             for (int i = 0; i < amountOfTerms; i++) {
                 System.out.print("Enter the coefficient of term number "+(i+1)+":");
@@ -40,13 +41,14 @@ public class Polynomial{
                     i--;
                     continue;
                 }
-                this.variables[i]=new X(power, coefficient);
+                X tempX=new X(power, coefficient);
+                this.variables.add(tempX);
             }
             s1.close();
-            this.degree=this.variables[0].power;
-            for (int i = 1; i < this.variables.length; i++) {
-                if(this.variables[i].power>this.degree){
-                    this.degree=this.variables[i].power;
+            this.degree=this.variables.get(0).power;
+            for (int i = 1; i < this.variables.size(); i++) {
+                if(this.variables.get(i).power>this.degree){
+                    this.degree=this.variables.get(i).power;
                 }
             }
             this.cleanVariables();
@@ -57,119 +59,176 @@ public class Polynomial{
         return this.degree;
     }
 
+    public void setVariables(LinkedList<X> variables){
+        this.variables=variables;
+    }
+
     public double getValue(double x){
         double value=0;
         if(this.degree==0){
             return 0;
         }
-        for (int i = 0; i < this.variables.length; i++) {
-            value+=this.variables[i].getValue(x);
+        for (int i = 0; i < this.variables.size(); i++) {
+            value+=this.variables.get(i).getValue(x);
         }
         return value;
     }
 
     public void scalarMultiplication(double a){
-        for (int i = 0; i < this.variables.length; i++) {
-            this.variables[i].coefficient*=a;
+        for (int i = 0; i < this.variables.size(); i++) {
+            this.variables.get(i).coefficient*=a;
         }
+    }
+
+    public void addCoefficient(int index, X variable){
+        if(this.variables.get(index).getPower() != variable.getPower()){
+            System.out.println("Powers don't match at addCoefficient.\nthis.variables.get(index).getPower() = "+this.variables.get(index).getPower());
+            System.out.println("variable.getPower() = "+variable.getPower());
+            return;
+        }
+        X temp=new X(variable.getPower(), this.variables.get(index).getCoefficient()+variable.getCoefficient());
+        this.variables.set(index, temp);
     }
 
     public void add(Polynomial p){
-        LinkedList<X> Q=new LinkedList<X>();
-        for (int i = 0; i < this.variables.length; i++) {
-            Q.add(this.variables[i]);
-        }
+        LinkedList<X> toAdd = new LinkedList<X>();
 
-
-        LinkedList<X> P=new LinkedList<X>();
-        for (int i = 0; i < p.variables.length; i++) {
-            P.add(p.variables[i]);
-        }
-
-
-        for (int i = 0; i < Q.size(); i++) {
-            for (int j = 0; j < P.size(); j++) {
-                if(Q.get(i).power==P.get(j).power){
-                    X temp=Q.get(i);
-                    temp.coefficient+=P.get(i).coefficient;
-                    Q.set(i, temp);
-                    P.remove(j);
+        for (X pTerm : p.variables) {
+            boolean matched=false;
+            for (int i = 0; i < this.variables.size(); i++) {
+                if(this.variables.get(i).power==pTerm.power){
+                    this.addCoefficient(i, pTerm);
+                    matched=true;
                     break;
                 }
             }
-        }
-
-
-        if(P.size()>0){
-            for (int i = 0; i < P.size(); i++) {
-                Q.add(P.get(i));
+            if (!matched) {
+                toAdd.add(new X(pTerm.power, pTerm.coefficient));
             }
         }
 
-        X[] temp=new X[Q.size()];
-        for (int i = 0; i < temp.length; i++) {
-            temp[i]=Q.get(i);
-        }
+        this.variables.addAll(toAdd);
 
-        this.variables=temp;
+
+        //call the clean function here after revising it
     }
 
     public void multiply(Polynomial p){
-        ArrayList<X> temp=new ArrayList<X>();
-        for (int i = 0; i < this.variables.length; i++) {
-            for (int j = 0; j < p.variables.length; j++) {
-                X tempX=new X(this.variables[i].power+p.variables[i].power, this.variables[i].coefficient*p.variables[i].coefficient);
-                temp.add(tempX);
+        //rewrite this!!!!!!!
+        LinkedList<X> tempArrayList=new LinkedList<X>();
+        for (X x1 : this.variables) {
+            for (X x2 : p.variables) {
+                X tempX=new X(x1.getPower()+x2.getPower(), x1.getCoefficient()*x2.getCoefficient());
+                tempArrayList.add(tempX);
             }
         }
-
-        X[] returnTemp=new X[temp.size()];
-
-        for (int i = 0; i < returnTemp.length; i++) {
-            returnTemp[i]=temp.get(i);
-        }
-
+        this.setVariables(tempArrayList);
         //write function that adds the same power terms together to clean the polynomial up and call the function below
-
-        this.variables=returnTemp;
         this.cleanVariables();
     }
 
-    public void cleanVariables(){
-        LinkedList<X> tempLinkedList=new LinkedList<X>();
-        for (int i = 0; i < this.variables.length; i++) {
-            tempLinkedList.add(this.variables[i]);
-        }
-
-
-        //there could be a bug below, look here in testing if you encounter issues
-
-        boolean hasChanged=false;
-
-        for (int i = 0; i < tempLinkedList.size()-1; i++) {
-            for (int j = i+1; j < tempLinkedList.size(); j++) {
-                if(tempLinkedList.get(i).power==tempLinkedList.get(j).power){
-                    hasChanged=true;
-                    X temp=new X(tempLinkedList.get(i).power, tempLinkedList.get(i).coefficient+tempLinkedList.get(j).coefficient);
-                    tempLinkedList.set(i, temp);
-                    tempLinkedList.remove(j);
+    public void cleanVariables() {
+        // Temporary list to hold consolidated variables
+        LinkedList<X> consolidatedVariables = new LinkedList<>();
+    
+        // Iterate through each term in the original list
+        for (X originalTerm : this.variables) {
+            boolean found = false;
+    
+            // Check if the term's power is already in the consolidated list
+            Iterator<X> iterator = consolidatedVariables.iterator();
+            while (iterator.hasNext()) {
+                X consolidatedTerm = iterator.next();
+                if (consolidatedTerm.getPower() == originalTerm.getPower()) {
+                    // If found, update the coefficient and mark as found
+                    consolidatedTerm.setCoefficient(consolidatedTerm.getCoefficient() + originalTerm.getCoefficient());
+                    found = true;
+                    break; // No need to check further
                 }
+            }
+    
+            // If the term's power wasn't found in the consolidated list, add it
+            if (!found) {
+                consolidatedVariables.add(new X(originalTerm.getPower(), originalTerm.getCoefficient()));
             }
         }
 
-        if(!hasChanged){
+        // Replace the original list with the consolidated list
+        this.variables = consolidatedVariables;
+
+        for (int i = 0; i < this.variables.size(); i++) {
+            if(this.variables.get(i).getCoefficient()==0){
+                this.variables.remove(i);
+            }
+        }  
+    }
+
+    public void printPolynomial(){
+        if(this.variables.isEmpty()){
+            System.out.println("Polynomial is empty.");
             return;
         }
 
-        X[] temp=new X[tempLinkedList.size()];
-        
-        for (int i = 0; i < temp.length; i++) {
-            temp[i]=tempLinkedList.get(i);
+        if(this.variables.get(0).getCoefficient()%(double)1==0){
+            if(this.variables.get(0).getPower()==0){
+                System.out.print((int)this.variables.get(0).getCoefficient());
+            } else if(this.variables.get(0).getPower()==1){
+                System.out.print((int)this.variables.get(0).getCoefficient()+"x");
+            } else{
+                System.out.print((int)this.variables.get(0).getCoefficient()+"x^"+this.variables.get(0).getPower());
+            }
+        } else{
+            if(this.variables.get(0).getPower()==0){
+                System.out.print(this.variables.get(0).getCoefficient());
+            } else if(this.variables.get(0).getPower()==1){
+                System.out.print(this.variables.get(0).getCoefficient()+"x");
+            } else{
+                System.out.print(this.variables.get(0).getCoefficient()+"x^"+this.variables.get(0).getPower());
+            }
         }
-
-        this.variables=temp;
-
-        //don't forget to call this function in the constructors and in multiply()
+        for (int i = 1; i < this.variables.size(); i++) {
+            if(this.variables.get(i).getCoefficient()%(double)1==0){
+                if(this.variables.get(i).getPower()==0){
+                    if(this.variables.get(i).getCoefficient()<0){
+                        System.out.print((int)this.variables.get(i).getCoefficient());
+                    } else{
+                        System.out.print("+"+(int)this.variables.get(i).getCoefficient());
+                    }
+                } else if(this.variables.get(i).getPower()==1){
+                    if(this.variables.get(i).getCoefficient()<0){
+                        System.out.print((int)this.variables.get(i).getCoefficient()+"x");
+                    } else{
+                        System.out.print("+"+(int)this.variables.get(i).getCoefficient()+"x");
+                    }
+                } else{
+                    if(this.variables.get(i).getCoefficient()<0){
+                        System.out.print((int)this.variables.get(i).getCoefficient()+"x^"+this.variables.get(i).getPower());
+                    } else{
+                        System.out.print("+"+(int)this.variables.get(i).getCoefficient()+"x^"+this.variables.get(i).getPower());
+                    }
+                }
+            } else{
+                if(this.variables.get(i).getPower()==0){
+                    if(this.variables.get(i).getCoefficient()<0){
+                        System.out.print(this.variables.get(i).getCoefficient());
+                    } else{
+                        System.out.print("+"+this.variables.get(i).getCoefficient());
+                    }
+                } else if(this.variables.get(i).getPower()==1){
+                    if(this.variables.get(i).getCoefficient()<0){
+                        System.out.print(this.variables.get(i).getCoefficient()+"x");
+                    } else{
+                        System.out.print("+"+this.variables.get(i).getCoefficient()+"x");
+                    }
+                } else{
+                    if(this.variables.get(i).getCoefficient()<0){
+                        System.out.print(this.variables.get(i).getCoefficient()+"x^"+this.variables.get(i).getPower());
+                    } else{
+                        System.out.print("+"+this.variables.get(i).getCoefficient()+"x^"+this.variables.get(i).getPower());
+                    }
+                }
+            }
+        }
     }
 } 
 
@@ -181,6 +240,10 @@ class X{
     public X(int power, double coefficient){
         if(power<0){
             System.out.println("Invalid power value.");
+            return;
+        }
+        if(coefficient==0){
+            System.out.println("Invalid coefficient value. 0 will just cancel the coefficient out of the polynomial and is unnecessary.");
             return;
         }
         this.power=power;
