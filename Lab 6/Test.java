@@ -5,6 +5,7 @@ public class Test {
         Eat eat=new Eat();
         Rest rest=new Rest();
         Study study=new Study();
+        double timeAtStart=Activity.getTimeLeft();
         Scanner s1=new Scanner(System.in);
         while(Activity.canContinue()&&!Activity.isCompleted()){
             System.out.println();
@@ -27,7 +28,7 @@ public class Test {
                 case 3:
                     eat.completed();
                     break;
-            
+
                 default:
                     System.out.println("Invalid input.");
                     break;
@@ -36,5 +37,8 @@ public class Test {
         s1.close();
         System.out.println("\n\n------------------------------\n\n");
         System.out.println("Completion percentage of the task: "+Activity.getCompletionPercentage()+"%");
+        if(Activity.isCompleted()){
+            System.out.println("Time taken to complete task: "+(timeAtStart-Activity.getTimeLeft()));
+        }
     }
 }
